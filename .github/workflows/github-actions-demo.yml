@@ -6,11 +6,10 @@ jobs:
     runs-on: self-hosted
     steps:
       - run: |
-          rm -rf .compiled/
-          mkdir -p .compiled/policies
-          mkdir -p .compiled/logs
+          rm -rf .compiled/  
       - run: echo "Compiling App Protect policies..."
       - run: |
+          mkdir -p .compiled/ap
           for file in ${{ github.workspace }}/policies/*; do \
             file_basename=$(basename $file .json); \
             /opt/app_protect/bin/apcompile -include-source -full-export \
@@ -20,6 +19,7 @@ jobs:
           done
       - run: echo "Compiling log policies..."
       - run: |
+          mkdir -p .compiled/log
           for file in ${{ github.workspace }}/logs/*; do \
             file_basename=$(basename $file .json); \
             /opt/app_protect/bin/apcompile \
