@@ -38,18 +38,18 @@ jobs:
       - run: echo "Publishing App Protect bundles..."
       - run: |
           for file in ${{ github.workspace }}/policies/*; do \
-            kubectl -n nginx-ingress-public cp $file $NIC_POD:/etc/app_protect/bundles/$(basename $file) \
+            kubectl -n nginx-ingress-public cp $file $NIC_POD:/etc/app_protect/bundles/$(basename $file); \
           done
       - run: echo "Publishing log bundles..."
       - run: |
           for file in ${{ github.workspace }}/logs/*; do \
-            kubectl -n nginx-ingress-public cp $file $NIC_POD:/etc/app_protect/bundles/$(basename $file) \
+            kubectl -n nginx-ingress-public cp $file $NIC_POD:/etc/app_protect/bundles/$(basename $file); \
           done
       - run: echo "Reloading App Protect..."
       - run: |
-          for pod in $ALL_NIC_PODS; do
-            echo "Running command on $pod"
-            kubectl -n nginx-ingress-public exec $pod -- /opt/app_protect/bin/apreload
+          for pod in $ALL_NIC_PODS; do \
+            echo "Running command on $pod"; \
+            kubectl -n nginx-ingress-public exec $pod -- /opt/app_protect/bin/apreload; \
           done
       - run: |
           echo "Negative test, expecting to fail"
