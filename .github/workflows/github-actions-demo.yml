@@ -7,7 +7,6 @@ jobs:
     steps:
       - run: |
           rm -rf .compiled/
-          cat ${{ github.workspace }}/.env >> $GITHUB_ENV
       - run: echo "Compiling App Protect policies..."
       - run: |
           mkdir -p .compiled/ap
@@ -31,6 +30,7 @@ jobs:
     needs: Compile-App-Protect-Policies
     runs-on: self-hosted
     steps:
+      - run: cat ${{ github.workspace }}/.env >> $GITHUB_ENV
       - run: |
           NIC_PODS=$(kubectl -n $NIC_NAMESPACE get pods -l $NIC_LABEL_SELECTOR -o jsonpath='{.items[*].metadata.name}')
           echo "Found pod $NIC_PODS"
@@ -52,6 +52,7 @@ jobs:
     needs: Publish-Policies-To-NIC
     runs-on: self-hosted
     steps:
+      - run: cat ${{ github.workspace }}/.env >> $GITHUB_ENV
       - run: echo "Reloading App Protect..."
       - run: |
           for pod in $ALL_NIC_PODS; do \
