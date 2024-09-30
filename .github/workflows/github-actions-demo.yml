@@ -1,15 +1,15 @@
 name: NGINX App Protect DevSecOps
-run-name: ${{ github.actor }} is testing out GitHub Actions 🚀
+run-name: Triggered by ${{ github.actor }} 🚀
 on: [push]
 jobs:
-  Publish-App-Protect-Policies:
+  Compile-App-Protect-Policies:
     runs-on: self-hosted
     steps:
       - run: |
           rm -rf .compiled/
           mkdir -p .compiled/policies
           mkdir -p .compiled/logs
-      - run: echo "Compiling policies..."
+      - run: echo "Compiling App Protect policies..."
       - run: |
           for file in ${{ github.workspace }}/policies/*; do \
             file_basename=$(basename $file .json); \
@@ -18,7 +18,7 @@ jobs:
               -p ${{ github.workspace }}/policies/$file_basename.json \
               -o ${{ github.workspace }}/.compiled/policies/$file_basename.tgz; \
           done
-      - run: echo "Compiling log configs..."
+      - run: echo "Compiling log policies..."
       - run: |
           for file in ${{ github.workspace }}/logs/*; do \
             file_basename=$(basename $file .json); \
@@ -26,6 +26,36 @@ jobs:
               -l ${{ github.workspace }}/logs/$file_basename.json \
               -o ${{ github.workspace }}/.compiled/logs/$file_basename.tgz; \
           done
+  Publish-Policies:
+    needs: Compile-App-Protect-Policies
+    runs-on: self-hosted
+    steps:
+      - run: |
+          kubectl config set-context --current --namespace=nginx-ingress-public
+          NIC_PODS=$(kubectl get pods -l app.kubernetes.io/instance=nginx-ingress-public -o jsonpath='{.items[*].metadata.name}')
+          echo "Found pod $NIC_PODS"
+          echo "ALL_NIC_PODS=$NIC_PODS" >> "$GITHUB_ENV"
+          echo "NIC_POD=$(echo $NIC_PODS | cut -d' ' -f1)" >> "$GITHUB_ENV"
+      - run: echo "Publishing App Protect bundles..."
+      - run: |
+          for file in ${{ github.workspace }}/policies/*; do \
+            kubectl cp $file $NIC_POD:/etc/app_protect/bundles/$(basename $file) \
+          done
+      - run: echo "Publishing log bundles..."
+      - run: |
+          for file in ${{ github.workspace }}/logs/*; do \
+            kubectl cp $file $NIC_POD:/etc/app_protect/bundles/$(basename $file) \
+          done
+      - run: echo "Reloading App Protect..."
+      - run: |
+          for pod in $ALL_NIC_PODS; do
+            echo "Running command on $pod"
+            kubectl exec $pod -- /opt/app_protect/bin/apreload
+          done
+      - run: |
+          echo "Negative test, expecting to fail"
+          NIC_POD=$(kubectl get pods -l app.kubernetes.io/instance=nginx-ingress-123 -o jsonpath='{.items[0].metadata.name}')
+          echo "Is this going to run?"
       # - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
       # - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
       # - run: echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
