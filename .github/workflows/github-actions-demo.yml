@@ -31,30 +31,29 @@ jobs:
     runs-on: self-hosted
     steps:
       - run: |
-          kubectl config set-context --current --namespace=nginx-ingress-public
-          NIC_PODS=$(kubectl get pods -l app.kubernetes.io/instance=nginx-ingress-public -o jsonpath='{.items[*].metadata.name}')
+          NIC_PODS=$(kubectl -n nginx-ingress-public get pods -l app.kubernetes.io/instance=nginx-ingress-public -o jsonpath='{.items[*].metadata.name}')
           echo "Found pod $NIC_PODS"
           echo "ALL_NIC_PODS=$NIC_PODS" >> "$GITHUB_ENV"
           echo "NIC_POD=$(echo $NIC_PODS | cut -d' ' -f1)" >> "$GITHUB_ENV"
       - run: echo "Publishing App Protect bundles..."
       - run: |
           for file in ${{ github.workspace }}/policies/*; do \
-            kubectl cp $file $NIC_POD:/etc/app_protect/bundles/$(basename $file) \
+            kubectl -n nginx-ingress-public cp $file $NIC_POD:/etc/app_protect/bundles/$(basename $file) \
           done
       - run: echo "Publishing log bundles..."
       - run: |
           for file in ${{ github.workspace }}/logs/*; do \
-            kubectl cp $file $NIC_POD:/etc/app_protect/bundles/$(basename $file) \
+            kubectl -n nginx-ingress-public cp $file $NIC_POD:/etc/app_protect/bundles/$(basename $file) \
           done
       - run: echo "Reloading App Protect..."
       - run: |
           for pod in $ALL_NIC_PODS; do
             echo "Running command on $pod"
-            kubectl exec $pod -- /opt/app_protect/bin/apreload
+            kubectl -n nginx-ingress-public exec $pod -- /opt/app_protect/bin/apreload
           done
       - run: |
           echo "Negative test, expecting to fail"
-          NIC_POD=$(kubectl get pods -l app.kubernetes.io/instance=nginx-ingress-123 -o jsonpath='{.items[0].metadata.name}')
+          NIC_POD=$(kubectl -n nginx-ingress-public get pods -l app.kubernetes.io/instance=nginx-ingress-123 -o jsonpath='{.items[0].metadata.name}')
           echo "Is this going to run?"
       # - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
       # - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
