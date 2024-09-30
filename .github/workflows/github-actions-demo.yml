@@ -5,8 +5,18 @@ jobs:
   Compile-App-Protect-Policies:
     runs-on: self-hosted
     steps:
+      - name: 'Cleanup build folder'
+        run: |
+          ls -la ./
+          rm -rf ./* || true
+          rm -rf ./.??* || true
+          ls -la ./
+      - name: Check out repository code
+        uses: actions/checkout@v4
       - run: |
-          rm -rf .compiled/
+          echo $(pwd)
+          echo ${{ github.workspace }}
+          ls -la
       - run: echo "Compiling App Protect policies..."
       - run: |
           mkdir -p .compiled/ap
