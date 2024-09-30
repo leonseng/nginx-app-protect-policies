@@ -11,16 +11,22 @@ jobs:
           mkdir -p .compiled/logs
       - run: echo "Compiling policies..."
       - run: |
-          /opt/app_protect/bin/apcompile -include-source -full-export \
-            -g ${{ github.workspace }}/global_settings.json \
-            -p ${{ github.workspace }}/policies/base.json \
-            -o ${{ github.workspace }}/.compiled/policies/base.tgz
+          for file in ${{ github.workspace }}/policies/*; do \
+            file_basename = $(basename $file .json); \
+            /opt/app_protect/bin/apcompile -include-source -full-export \
+              -g ${{ github.workspace }}/global_settings.json \
+              -p ${{ github.workspace }}/policies/$file_basename.json \
+              -o ${{ github.workspace }}/.compiled/policies/$file_basename.tgz; \
+          done
       - run: echo "Compiling log configs..."
       - run: |
-          /opt/app_protect/bin/apcompile -include-source -full-export \
-            -g ${{ github.workspace }}/global_settings.json \
-            -p ${{ github.workspace }}/policies/base.json \
-            -o ${{ github.workspace }}/.compiled/policies/base.tgz
+          for file in ${{ github.workspace }}/logs/*; do \
+            file_basename = $(basename $file .json); \
+            /opt/app_protect/bin/apcompile -include-source -full-export \
+              -g ${{ github.workspace }}/global_settings.json \
+              -p ${{ github.workspace }}/logs/$file_basename.json \
+              -o ${{ github.workspace }}/.compiled/logs/$file_basename.tgz; \
+          done
       # - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
       # - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
       # - run: echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
