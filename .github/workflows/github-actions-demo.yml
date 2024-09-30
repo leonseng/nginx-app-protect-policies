@@ -12,7 +12,7 @@ jobs:
       - run: echo "Compiling policies..."
       - run: |
           for file in ${{ github.workspace }}/policies/*; do \
-            file_basename = $(basename $file .json); \
+            file_basename=$(basename $file .json); \
             /opt/app_protect/bin/apcompile -include-source -full-export \
               -g ${{ github.workspace }}/global_settings.json \
               -p ${{ github.workspace }}/policies/$file_basename.json \
@@ -21,7 +21,7 @@ jobs:
       - run: echo "Compiling log configs..."
       - run: |
           for file in ${{ github.workspace }}/logs/*; do \
-            file_basename = $(basename $file .json); \
+            file_basename=$(basename $file .json); \
             /opt/app_protect/bin/apcompile -include-source -full-export \
               -g ${{ github.workspace }}/global_settings.json \
               -p ${{ github.workspace }}/logs/$file_basename.json \
