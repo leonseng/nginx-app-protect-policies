@@ -6,65 +6,55 @@ jobs:
     runs-on: self-hosted
     steps:
       - run: |
-          rm -rf .compiled/  
+          rm -rf .compiled/
+          cat ${{ github.workspace }}/.env >> $GITHUB_ENV
       - run: echo "Compiling App Protect policies..."
       - run: |
           mkdir -p .compiled/ap
-          for file in ${{ github.workspace }}/policies/*; do \
+          for file in ${{ github.workspace }}/policies/app_protect/*; do \
             file_basename=$(basename $file .json); \
             /opt/app_protect/bin/apcompile -include-source -full-export \
-              -g ${{ github.workspace }}/global_settings.json \
-              -p ${{ github.workspace }}/policies/$file_basename.json \
+              -g ${{ github.workspace }}/policies/global_settings.json \
+              -p ${{ github.workspace }}/policies/app_protect/$file_basename.json \
               -o ${{ github.workspace }}/.compiled/ap/$file_basename.tgz; \
           done
       - run: echo "Compiling log policies..."
       - run: |
           mkdir -p .compiled/log
-          for file in ${{ github.workspace }}/logs/*; do \
+          for file in ${{ github.workspace }}/app_protect/log/*; do \
             file_basename=$(basename $file .json); \
             /opt/app_protect/bin/apcompile \
-              -l ${{ github.workspace }}/logs/$file_basename.json \
+              -l ${{ github.workspace }}/app_protect/log/$file_basename.json \
               -o ${{ github.workspace }}/.compiled/log/$file_basename.tgz; \
           done
-  Publish-Policies:
+  Publish-Policies-To-NIC:
     needs: Compile-App-Protect-Policies
     runs-on: self-hosted
     steps:
       - run: |
-          NIC_PODS=$(kubectl -n nginx-ingress-public get pods -l app.kubernetes.io/instance=nginx-ingress-public -o jsonpath='{.items[*].metadata.name}')
+          NIC_PODS=$(kubectl -n $NIC_NAMESPACE get pods -l $NIC_LABEL_SELECTOR -o jsonpath='{.items[*].metadata.name}')
           echo "Found pod $NIC_PODS"
           echo "ALL_NIC_PODS=$NIC_PODS" >> "$GITHUB_ENV"
           echo "NIC_POD=$(echo $NIC_PODS | cut -d' ' -f1)" >> "$GITHUB_ENV"
       - run: echo "Publishing App Protect bundles..."
       - run: |
-          kubectl -n nginx-ingress-public exec $NIC_POD -- mkdir -p /etc/app_protect/bundles/ap
+          kubectl -n $NIC_NAMESPACE exec $NIC_POD -- mkdir -p /etc/app_protect/bundles/ap
           for file in ${{ github.workspace }}/.compiled/ap/*; do \
-            kubectl -n nginx-ingress-public cp $file $NIC_POD:/etc/app_protect/bundles/ap/$(basename $file); \
+            kubectl -n $NIC_NAMESPACE cp $file $NIC_POD:/etc/app_protect/bundles/ap/$(basename $file); \
           done
       - run: echo "Publishing log bundles..."
       - run: |
-          kubectl -n nginx-ingress-public exec $NIC_POD -- mkdir -p /etc/app_protect/bundles/log
+          kubectl -n $NIC_NAMESPACE exec $NIC_POD -- mkdir -p /etc/app_protect/bundles/log
           for file in ${{ github.workspace }}/.compiled/log/*; do \
-            kubectl -n nginx-ingress-public cp $file $NIC_POD:/etc/app_protect/bundles/log/$(basename $file); \
+            kubectl -n $NIC_NAMESPACE cp $file $NIC_POD:/etc/app_protect/bundles/log/$(basename $file); \
           done
+  Reload-App-Protect:
+    needs: Publish-Policies-To-NIC
+    runs-on: self-hosted
+    steps:
       - run: echo "Reloading App Protect..."
       - run: |
           for pod in $ALL_NIC_PODS; do \
             echo "Running command on $pod"; \
-            kubectl -n nginx-ingress-public exec $pod -- /opt/app_protect/bin/apreload; \
+            kubectl -n $NIC_NAMESPACE exec $pod -- /opt/app_protect/bin/apreload; \
           done
-      - run: |
-          echo "Negative test, expecting to fail"
-          NIC_POD=$(kubectl -n nginx-ingress-public get pods -l app.kubernetes.io/instance=nginx-ingress-123 -o jsonpath='{.items[0].metadata.name}')
-          echo "Is this going to run?"
-      # - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
-      # - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
-      # - run: echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
-      # - name: Check out repository code
-      #   uses: actions/checkout@v4
-      # - run: echo "💡 The ${{ github.repository }} repository has been cloned to the runner."
-      # - run: echo "🖥️ The workflow is now ready to test your code on the runner."
-      # - name: List files in the repository
-      #   run: |
-      #     ls ${{ github.workspace }}
-      # - run: echo "🍏 This job's status is ${{ job.status }}."
