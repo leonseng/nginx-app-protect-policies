@@ -5,18 +5,12 @@ jobs:
   Compile-App-Protect-Policies:
     runs-on: self-hosted
     steps:
-      - name: 'Cleanup build folder'
+      - name: Cleanup build folder
         run: |
-          ls -la ./
           rm -rf ./* || true
           rm -rf ./.??* || true
-          ls -la ./
       - name: Check out repository code
         uses: actions/checkout@v4
-      - run: |
-          echo $(pwd)
-          echo ${{ github.workspace }}
-          ls -la
       - run: echo "Compiling App Protect policies..."
       - run: |
           mkdir -p .compiled/ap
@@ -33,7 +27,7 @@ jobs:
           for file in ${{ github.workspace }}/app_protect/log/*; do \
             file_basename=$(basename $file .json); \
             /opt/app_protect/bin/apcompile \
-              -l ${{ github.workspace }}/app_protect/log/$file_basename.json \
+              -l ${{ github.workspace }}/policies/log/$file_basename.json \
               -o ${{ github.workspace }}/.compiled/log/$file_basename.tgz; \
           done
   Publish-Policies-To-NIC:
