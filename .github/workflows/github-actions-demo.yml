@@ -37,12 +37,12 @@ jobs:
           echo "NIC_POD=$(echo $NIC_PODS | cut -d' ' -f1)" >> "$GITHUB_ENV"
       - run: echo "Publishing App Protect bundles..."
       - run: |
-          for file in ${{ github.workspace }}/policies/*; do \
+          for file in ${{ github.workspace }}/.compiled/policies/*; do \
             kubectl -n nginx-ingress-public cp $file $NIC_POD:/etc/app_protect/bundles/$(basename $file); \
           done
       - run: echo "Publishing log bundles..."
       - run: |
-          for file in ${{ github.workspace }}/logs/*; do \
+          for file in ${{ github.workspace }}/.compiled/logs/*; do \
             kubectl -n nginx-ingress-public cp $file $NIC_POD:/etc/app_protect/bundles/$(basename $file); \
           done
       - run: echo "Reloading App Protect..."
