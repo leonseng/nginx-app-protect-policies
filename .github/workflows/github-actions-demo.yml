@@ -1,8 +1,8 @@
-name: GitHub Actions Demo
+name: NGINX App Protect DevSecOps
 run-name: ${{ github.actor }} is testing out GitHub Actions 🚀
 on: [push]
 jobs:
-  Explore-GitHub-Actions:
+  Publish-App-Protect-Policies:
     runs-on: self-hosted
     steps:
       - run: |
@@ -22,9 +22,8 @@ jobs:
       - run: |
           for file in ${{ github.workspace }}/logs/*; do \
             file_basename=$(basename $file .json); \
-            /opt/app_protect/bin/apcompile -include-source -full-export \
-              -g ${{ github.workspace }}/global_settings.json \
-              -p ${{ github.workspace }}/logs/$file_basename.json \
+            /opt/app_protect/bin/apcompile \
+              -l ${{ github.workspace }}/logs/$file_basename.json \
               -o ${{ github.workspace }}/.compiled/logs/$file_basename.tgz; \
           done
       # - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
