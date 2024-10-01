@@ -24,7 +24,7 @@ jobs:
       - run: echo "Compiling log policies..."
       - run: |
           mkdir -p .compiled/log
-          for file in ${{ github.workspace }}/app_protect/log/*; do \
+          for file in ${{ github.workspace }}/policies/log/*; do \
             file_basename=$(basename $file .json); \
             /opt/app_protect/bin/apcompile \
               -l ${{ github.workspace }}/policies/log/$file_basename.json \
