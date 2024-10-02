@@ -1,8 +1,6 @@
-name: Run appreload on NGINX Ingress Controllers
+name: Run apreload on NGINX Ingress Controllers
 run-name: Triggered by ${{ github.actor }} 🚀
-on:
-  - push
-  - workflow_dispatch
+on: workflow_dispatch
 jobs:
   Reload-App-Protect:
     runs-on: self-hosted
