@@ -1,6 +1,8 @@
 name: Compile NGINX App Protect Policies
 run-name: Triggered by ${{ github.actor }} 🚀
-on: workflow_dispatch
+on:
+  - push
+  - workflow_dispatch
 jobs:
   Compile-App-Protect-Policies:
     runs-on: self-hosted
