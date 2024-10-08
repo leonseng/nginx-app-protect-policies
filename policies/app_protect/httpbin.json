@@ -5,7 +5,7 @@
       "name": "POLICY_TEMPLATE_NGINX_BASE"
     },
     "caseInsensitive": false,
-    "enforcementMode": "blocking",
+    "enforcementMode": "transparent",
     "signature-sets": [
       {
         "alarm": true,
